@@ -17,6 +17,9 @@ Um aplicativo de chat em tempo real desenvolvido com Flutter e Firebase, permiti
 - [Telas do Aplicativo](#telas-do-aplicativo)
 - [Estrutura do Projeto](#estrutura-do-projeto)
 - [Como Executar](#como-executar-o-projeto)
+- [Criar Keystore](#criar-keystore)
+- [Configurar keystore](#configurar-keystore)
+- [Atualizar build gradle](#atualizar-build-gradle)
 
 ## Funcionalidades
 
@@ -133,5 +136,46 @@ Pré-requisitos
 flutter clean
 flutter pub get
 flutter run
+flutter build apk --debug
+flutter build apk --release
+flutter build appbundle --release
 ```
 
+## Criar keystore
+```sh
+keytool -genkey -v -keystore ~/upload-keystore.jks -keyalg RSA -keysize 2048 -validity 10000 -alias upload
+```
+## Configurar keystore
+Crie o arquivo android/key.properties com:
+```sh
+storePassword=SUA_SENHA
+keyPassword=SUA_SENHA
+keyAlias=upload
+storeFile=../../upload-keystore.jks  # Caminho relativo ao seu keystore
+```
+
+## Atualizar build gradle
+```sh
+def keystoreProperties = new Properties()
+def keystorePropertiesFile = rootProject.file('key.properties')
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+}
+
+android {
+    ...
+    signingConfigs {
+        release {
+            keyAlias keystoreProperties['keyAlias']
+            keyPassword keystoreProperties['keyPassword']
+            storeFile keystoreProperties['storeFile'] ? file(keystoreProperties['storeFile']) : null
+            storePassword keystoreProperties['storePassword']
+        }
+    }
+    buildTypes {
+        release {
+            signingConfig signingConfigs.release
+        }
+    }
+}
+```
